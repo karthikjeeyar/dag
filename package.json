@@ -1,0 +1,39 @@
+{
+  "name": "@graph/dag",
+  "version": "1.0.0",
+  "description": "DAG stands for “Directed Acyclic Graph”. DAGs represent a series of activities that happen in a specific order and do not self-reference (loop).",
+  "scripts": {
+    "build": "tsup",
+    "test": "jest"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "graph",
+    "dag",
+    "directed",
+    "acyclic",
+    "graph"
+  ],
+  "author": "Karthik Jeeyar",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.3",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.2.2",
+    "typescript": "^5.5.4"
+  }
+}
