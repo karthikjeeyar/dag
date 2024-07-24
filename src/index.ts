@@ -40,7 +40,8 @@ export class DAG {
     visited.set(name, true);
 
     for (const depName of dependancyNames) {
-      this.visit(dependancy[depName], fn, visited, path, stack);
+      if (dependancy[depName])
+        this.visit(dependancy[depName], fn, visited, path, stack);
     }
 
     fn(vertex, path);
@@ -48,14 +49,7 @@ export class DAG {
     path.pop();
   }
 
-  private map(name: string, data: any): void {
-    const vertex = this.addVertex(name);
-    if (vertex) {
-      vertex.data = data;
-    }
-  }
-
-  addVertex(name: string): Vertex | null {
+  addVertex(name: string, data?: any): Vertex | null {
     if (!name) {
       return null;
     }
@@ -69,7 +63,7 @@ export class DAG {
       dependancy: {},
       dependancyNames: [],
       hasOutgoing: false,
-      data: {},
+      data,
     };
     this.vertices.set(name, vertex);
     this.names.push(name);
@@ -104,24 +98,24 @@ export class DAG {
   addEdges(
     name: string,
     data: any,
-    before: string | string[],
-    after: string | string[]
+    runBefore: string | string[],
+    runAfter: string | string[]
   ): void {
-    this.map(name, data);
+    this.addVertex(name, data);
 
-    if (before) {
-      if (typeof before === "string") {
-        this.addEdge(name, before);
+    if (runBefore) {
+      if (typeof runBefore === "string") {
+        this.addEdge(name, runBefore);
       } else {
-        before.forEach((b) => this.addEdge(name, b));
+        runBefore.forEach((b) => this.addEdge(name, b));
       }
     }
 
-    if (after) {
-      if (typeof after === "string") {
-        this.addEdge(after, name);
+    if (runAfter) {
+      if (typeof runAfter === "string") {
+        this.addEdge(runAfter, name);
       } else {
-        after.forEach((a) => this.addEdge(a, name));
+        runAfter.forEach((a) => this.addEdge(a, name));
       }
     }
   }
@@ -136,7 +130,8 @@ export class DAG {
       let maxStage = 0;
       for (const depName of vertex.dependancyNames) {
         const depVertex = vertex.dependancy[depName];
-        maxStage = Math.max(maxStage, computeStageForVertex(depVertex));
+        if (depVertex)
+          maxStage = Math.max(maxStage, computeStageForVertex(depVertex));
       }
 
       const stage = maxStage + 1;

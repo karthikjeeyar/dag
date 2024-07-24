@@ -62,13 +62,25 @@ describe("DAG", () => {
     expect(output).toBe("A --> B --> C");
   });
 
+  test("should simple graph with dependencies", () => {
+    dag.addVertex("A", { color: "blue", shape: "round" });
+    dag.addVertex("B");
+    dag.addVertex("C");
+
+    dag.addEdge("A", "B");
+    dag.addEdge("B", "C");
+
+    const output = dag.printGraph();
+    expect(output).toBe("A --> B --> C");
+  });
+
   test("should handle complex graph with multiple dependencies", () => {
-    dag.addEdges("A", {}, [], []);
-    dag.addEdges("B", {}, ["C"], ["A"]);
-    dag.addEdges("C", {}, [], []);
-    dag.addEdges("D", {}, [], ["C"]);
-    dag.addEdges("E", {}, ["F"], ["D"]);
-    dag.addEdges("F", {}, [], []);
+    dag.addEdges("A", {}, ["B", "F"], []);
+    dag.addEdges("B", {}, ["F"], ["A"]);
+    dag.addEdges("C", {}, ["E"], ["B"]);
+    dag.addEdges("D", {}, ["E"], ["B"]);
+    dag.addEdges("E", {}, [], []);
+    dag.addEdges("F", {}, [], ["E"]);
 
     const output = dag.printGraph();
     expect(output).toBe("A --> B --> C --> D --> E --> F");
