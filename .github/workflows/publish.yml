@@ -1,4 +1,4 @@
-name: Publish
+name: DAG Publish
 on:
   push:
     branches:
