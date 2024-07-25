@@ -1,4 +1,4 @@
-name: DAG PR check
+name: DAG CI
 on:
   pull_request:
     branches: [main]
