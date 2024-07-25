@@ -1,6 +1,6 @@
 {
   "name": "@graphtools/dag",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "DAG stands for “Directed Acyclic Graph”. DAGs represent a series of activities that happen in a specific order and do not self-reference (loop).",
   "scripts": {
     "build": "tsup",
