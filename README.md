@@ -28,9 +28,14 @@ npm install @graphtools/dag
 `topologicalSort(fn: (v: Vertex, path: string[]) => void): void`
 - The topologicalSort method performs a depth-first traversal of the graph to sort vertices in a topological order.
 
+
 `printGraph(): string`
 
 - Computes the stages for all vertices and performs a topological sort to print the execution order of the tasks with their respective stages. Returns the formatted string.
+
+`printPipeline(): string`
+
+- Computes the stages for all vertices and performs a topological sort to display the execution order of tasks along with their respective stages. Returns a formatted string resembling a pipeline.
 
 ## Usage
 
@@ -67,6 +72,13 @@ using `addVertex` method to add vertices and create edges using `addEdge` method
     dag.addEdges("E", {}, ["F"], ["D"]);
     dag.addEdges("F", {}, [], []);
 
-    dag.printGraph(); // Output: A --> B --> C --> D --> E --> F
+    dag.printGraph();
+     // Output: A --> B --> C --> D --> E --> F
+
+    dag.printPipeline();
+    //Output:
+    // | A |   -> | B |   -> | C |   -> | E |   -> | F |
+    //                       | D |
+
 
 ```
