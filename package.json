@@ -1,6 +1,6 @@
 {
   "name": "@graphtools/dag",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Directed acyclic graph with staged execution: topological ordering, cycle detection, and a parallel-stage pipeline renderer.",
   "scripts": {
     "build": "tsup",
