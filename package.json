@@ -7,7 +7,8 @@
     "lint": "tsc",
     "test": "jest",
     "release": "changeset publish",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "prepack": "pnpm build"
   },
   "repository": {
     "type": "git",
