@@ -1,84 +1,166 @@
-# Directed Acyclic Graph (DAG) 
+# @graphtools/dag
 
+![CI](https://github.com/karthikjeeyar/dag/actions/workflows/check.yml/badge.svg)
+![npm](https://img.shields.io/npm/v/@graphtools/dag)
 
-This package is a simple implementation of a Directed Acyclic Graph (DAG). It supports adding vertices, defining dependencies (edges), computing stages for tasks, and performing a topological sort to print the execution order of the tasks with their respective stages.
+**A directed acyclic graph that tells you what can run in parallel.**
 
+Give it tasks and their dependencies. It validates every edge as you add it,
+computes the stage each task belongs to, and renders the pipeline for a build
+log or a terminal.
 
-## Getting Started
+```javascript
+import { DAG } from "@graphtools/dag";
 
-To install using npm:
+const ci = new DAG();
+
+ci.addEdges("lint",       {}, [], []);
+ci.addEdges("build",      {}, [], ["lint"]);
+ci.addEdges("unit-tests", {}, [], ["lint"]);
+ci.addEdges("e2e",        {}, [], ["build", "unit-tests"]);
+
+console.log(ci.printPipeline());
+```
+
+```
+| lint       | -> | build      | -> | e2e        |
+                  | unit-tests |
+```
+
+`build` and `unit-tests` share a stage, so they can run at the same time.
+Every vertex carries its `stage`, so you can group tasks yourself:
+
+```javascript
+const stages = new Map();
+for (const vertex of ci.vertices.values()) {
+  const stage = vertex.stage;
+  stages.set(stage, [...(stages.get(stage) ?? []), vertex.name]);
+}
+
+// Map(3) { 1 => ["lint"], 2 => ["build", "unit-tests"], 3 => ["e2e"] }
+```
+
+- **Zero runtime dependencies**, full TypeScript types.
+- **Cycles rejected on insert**, with the whole cycle in the error message.
+- **Strict about input**: an empty name or a self-referencing edge throws
+  instead of being silently dropped.
+- **CJS and ESM builds**, Node 18+.
+
+## Install
 
 ```cli
 npm install @graphtools/dag
 ```
 
+## Why
+
+A topological sort tells you the order. It does not tell you which steps are
+independent, and it cannot show you the shape of the plan. This library does
+both, and it refuses to let you build a graph that cannot be scheduled.
+
 ## Methods
 
-`addVertex(name: string, data?: any): Vertex | null` 
+`addVertex(name: string, data?: T): Vertex<T> | null`
 
-- Adds a vertex with the given name to the DAG if it doesn't already exist. Returns the vertex object or null if the name is invalid.
+- Adds a vertex with the given name, or updates the payload of an existing one.
+- Returns the vertex, or `null` when `name` is empty or blank.
 
 `addEdge(source: string, target: string): void`
 
-- Adds a directed edge from the source vertex to the target vertex. It also checks for cycles and throws an error if a cycle is detected.
+- Adds a directed edge, meaning `source` runs before `target`.
+- Adding an edge that already exists is a no-op.
+- Throws when a name is empty, when `source` and `target` are the same vertex,
+  or when the edge would create a cycle. A rejected edge leaves the graph
+  untouched.
 
-`addEdges(name: string, data: any, runBefore: string | string[], runAfter: string | string[]): void`
-- Adds a vertex and its dependencies. The vertex depends on vertices specified in before and is a prerequisite for vertices specified in after.
+`addEdges(name: string, data?: T, runBefore?: string | string[], runAfter?: string | string[]): void`
 
-`topologicalSort(fn: (v: Vertex, path: string[]) => void): void`
-- The topologicalSort method performs a depth-first traversal of the graph to sort vertices in a topological order.
+- Adds a vertex together with its edges.
+- `runBefore` lists vertices that must run **after** `name`.
+- `runAfter` lists vertices that must run **before** `name`.
 
+`topologicalSort(fn: (vertex: Vertex<T>, path: string[]) => void): void`
+
+- Calls `fn` for every vertex, after its dependencies.
 
 `printGraph(): string`
 
-- Computes the stages for all vertices and performs a topological sort to print the execution order of the tasks with their respective stages. Returns the formatted string.
+- Renders the graph as arrows. Unrelated components are printed on separate
+  lines so they never look connected.
 
 `printPipeline(): string`
 
-- Computes the stages for all vertices and performs a topological sort to display the execution order of tasks along with their respective stages. Returns a formatted string resembling a pipeline.
+- Renders one column per stage, so every vertex in a column can run in
+  parallel.
+
+`names: string[]`
+
+- The vertex names, in insertion order.
+
+`vertices: Map<string, Vertex<T>>`
+
+- All vertices, with `stage` recomputed if the graph changed since the last
+  read. `stage` is one-based.
 
 ## Usage
 
-#### Example 1:
+#### Example 1
 
-using `addVertex` method to add vertices and create edges using `addEdge` method
-
-```javascript
-    const dag = new DAG();
-
-    dag.addVertex("A", {color: 'blue', shape: 'round'});
-    dag.addVertex("B");
-    dag.addVertex("C");
-
-    dag.addEdge('A', 'B');
-    dag.addEdge('B', 'C');
-
-    dag.printGraph(); // Output: A --> B --> C
-
-```
-
-
-#### Example 2:
-
-`dag.addEdges` method creates vertices and edges and creates a dag.
+Adding vertices with `addVertex` and connecting them with `addEdge`:
 
 ```javascript
-    const dag = new DAG();
+const dag = new DAG();
 
-    dag.addEdges("A", {}, [], []);
-    dag.addEdges("B", {}, [], ["A"]);
-    dag.addEdges("C", {}, [], ['B']);
-    dag.addEdges("D", {}, [], ["C"]);
-    dag.addEdges("E", {}, ["F"], ["D"]);
-    dag.addEdges("F", {}, [], []);
+dag.addVertex("A", { color: "blue", shape: "round" });
+dag.addVertex("B");
+dag.addVertex("C");
 
-    dag.printGraph();
-     // Output: A --> B --> C --> D --> E --> F
+dag.addEdge("A", "B");
+dag.addEdge("B", "C");
 
-    dag.printPipeline();
-    //Output:
-    // | A |   -> | B |   -> | C |   -> | E |   -> | F |
-    //                       | D |
-
-
+dag.printGraph(); // A --> B --> C
 ```
+
+#### Example 2
+
+`addEdges` creates the vertex and its edges in one call:
+
+```javascript
+const dag = new DAG();
+
+dag.addEdges("A", {}, [], []);
+dag.addEdges("B", {}, [], ["A"]);
+dag.addEdges("C", {}, [], ["B"]);
+dag.addEdges("D", {}, [], ["C"]);
+dag.addEdges("E", {}, ["F"], ["D"]);
+dag.addEdges("F", {}, [], []);
+
+dag.printGraph();    // A --> B --> C --> D --> E --> F
+dag.printPipeline(); // | A | -> | B | -> | C | -> | D | -> | E | -> | F |
+```
+
+#### Example 3: typed payloads
+
+`DAG` and `Vertex` are generic over the payload type:
+
+```typescript
+type Job = { retries: number };
+
+const dag = new DAG<Job>();
+dag.addVertex("deploy", { retries: 3 });
+
+dag.vertices.get("deploy")?.data; // Job | undefined
+```
+
+## Cycles
+
+Cycles are rejected when the edge is added, and the error names the cycle:
+
+```javascript
+dag.addEdge("F", "A");
+// Error: cycle detected: A --> B --> C --> D --> E --> F --> A
+```
+
+## License
+
+Apache-2.0
